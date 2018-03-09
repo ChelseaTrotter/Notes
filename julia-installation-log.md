@@ -71,3 +71,38 @@ It returned 2 results. one is `/gnu/store/9hd38bkw8bq8gq6lcv6vd8xjpcsbyzlm-zlib-
    I did `export LD_LIBRARY_PATH=/usr/local/lib`, then nothing works in command line anymore (I tried to do `ls` and got error `illegal instruction, core dump`). So I had to roll back and set it as empty. Then I did `export LIBRARY_PATH=/home/xiaoqihu/.guix-profile/lib/` to find zlib.
 
 I am trying to solve the error " one or more libs available at link-time are not available run-time. Libs used at link-time: -lssh2"
+
+**March 8th, 2018**
+
+I got `disk is full` error today. See detailed error message below:
+```
+/home/xiaoqihu/julia/deps/srccache/curl-7.56.0//configure: line 197: cannot create temp file for here-document: No space left on device
+configure: error: 'cat' utility not found in 'PATH'. Can not continue.
+make[1]: *** [scratch/curl-7.56.0/build-configured] Error 1
+make: *** [julia-deps] Error 2
+```
+I run `df` and here is the result.
+```
+xiaoqihu@penguin:~/julia$ df -h
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/sda1       108G  103G     0 100% /
+udev             63G  4.0K   63G   1% /dev
+tmpfs            13G  372K   13G   1% /run
+none            5.0M     0  5.0M   0% /run/lock
+none             63G  312K   63G   1% /run/shm
+/dev/sdb1       787G  537G  210G  72% /mnt/big
+```
+**March 9th, 2018**
+
+After Lei cleaned up his home folder, it gave 5GB of space on Penguin.
+
+Every now and then, I will get and error saying:
+```
+checking whether the C compiler works... no
+configure: error: in `/home/xiaoqihu/julia/deps/scratch/curl-7.56.0':
+configure: error: C compiler cannot create executables
+See `config.log' for more details
+make[1]: *** [scratch/curl-7.56.0/build-configured] Error 77
+make: *** [julia-deps] Error 2
+```
+This is because LIBRARY_PATH is not set. Doing this `export LIBRARY_PATH=/home/xiaoqihu/.guix-profile/lib/` fixes the issue.
