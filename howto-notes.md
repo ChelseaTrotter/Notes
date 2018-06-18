@@ -13,3 +13,15 @@ I wanted to be able to edit files on a remote server using the editor on my loca
 8. To unmount, do this `sudo umount ~/mountpoint`
 9. To permanantly mount at this location, do this `sudo vim /etc/fstab`, and then scroll to the bottom of the file and add the following entry: `$username@xxx.xxx.xxx.xxx:/ ~/mountpoint`. **WARNING**: This is a potential security risk, because if your local machine is compromised it allows a direct route to your `mountpoint`. Therefore it is not recommended to setup permanent mounts on production servers.
 10. Save the changes to `/etc/fstab` and reboot if necessary.
+
+### [SSL: CERTIFICATE_VERIFY_FAILED] error when trying 'hg clone'
+Here is the whole error message:
+```
+$ hg clone https://Xiaoqi-hu@bitbucket.org/linen/fastlmm-gpu
+
+(an attempt was made to load CA certificates but none were loaded; see https://mercurial-scm.org/wiki/SecureConnections for how to configure Mercurial to avoid this error)
+abort: error: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed (_ssl.c:661)
+```
+I just followed the instruction(go to [this page](https://mercurial-scm.org/wiki/SecureConnections)) and found the solution on [this page](https://www.mercurial-scm.org/wiki/CACertificates). Basically put the following line to `~/.hgrc` fixed the problem (create ~/.hgrc file if it does not already exist).
+`[web]
+cacerts = /etc/ssl/certs/ca-certificates.crt`

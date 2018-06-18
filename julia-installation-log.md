@@ -70,11 +70,11 @@ It returned 2 results. one is `/gnu/store/9hd38bkw8bq8gq6lcv6vd8xjpcsbyzlm-zlib-
 
    I did `export LD_LIBRARY_PATH=/usr/local/lib`, then nothing works in command line anymore (I tried to do `ls` and got error `illegal instruction, core dump`). So I had to roll back and set it as empty. Then I did `export LIBRARY_PATH=/home/xiaoqihu/.guix-profile/lib/` to find zlib.
 
-I am trying to solve the error " one or more libs available at link-time are not available run-time. Libs used at link-time: -lssh2"
+   I am trying to solve the error " one or more libs available at link-time are not available run-time. Libs used at link-time: -lssh2"
 
 **March 8th, 2018**
 
-I got `disk is full` error today. See detailed error message below:
+6. I got `disk is full` error today. See detailed error message below:
 ```
 /home/xiaoqihu/julia/deps/srccache/curl-7.56.0//configure: line 197: cannot create temp file for here-document: No space left on device
 configure: error: 'cat' utility not found in 'PATH'. Can not continue.
@@ -94,8 +94,7 @@ none             63G  312K   63G   1% /run/shm
 ```
 **March 9th, 2018**
 
-After Lei cleaned up his home folder, it gave 5GB of space on Penguin.
-
+7. After Lei cleaned up his home folder, it gave 5GB of space on Penguin.  I am able to run `make` again.
 Every now and then, I will get and error saying:
 ```
 checking whether the C compiler works... no
@@ -105,4 +104,32 @@ See `config.log' for more details
 make[1]: *** [scratch/curl-7.56.0/build-configured] Error 77
 make: *** [julia-deps] Error 2
 ```
-This is because LIBRARY_PATH is not set. Doing this `export LIBRARY_PATH=/home/xiaoqihu/.guix-profile/lib/` fixes the issue.
+This is because LIBRARY_PATH is not set. I am not sure which command that I tried to fix other issue would unset this value. But doing this: `export LIBRARY_PATH=/home/xiaoqihu/.guix-profile/lib/` fixes the error.
+
+Now I am back to hunt for the solution for "libs that are available at link time are not available at run-time".
+
+
+**March 15, 2018**
+I am back to trying to install Julia on penguin after Pjotr tried for a couple days. It has proven to be very time consuming and I have gotten nowhere.
+
+But Pjotr says that Penguin now has gcc 4.9 version, so I should be able to build Julia without any guix support.
+
+Let's try that.
+
+Here is the first error that I run into:
+```
+axpy.c: In function 'void saxpy_(blasint*, float*, float*, blasint*, float*, blasint*)':
+axpy.c:111:62: error: invalid conversion from 'void*' to 'int (*)()' [-fpermissive]
+          x, incx, y, incy, NULL, 0, (void *)AXPYU_K, nthreads);
+                                                              ^
+In file included from ../common.h:757:0,
+                 from axpy.c:40:
+../common_thread.h:177:5: note: initializing argument 12 of 'int blas_level1_thread(int, BLASLONG, BLASLONG, BLASLONG, void*, void*, BLASLONG, void*, BLASLONG, void*, BLASLONG, int (*)(), int)'
+ int blas_level1_thread(int mode, BLASLONG m, BLASLONG n, BLASLONG k, void *alpha,
+     ^
+make[3]: *** [saxpy.o] Error 1
+make[2]: *** [libs] Error 1
+*** Clean the OpenBLAS build with 'make -C deps clean-openblas'. Rebuild with 'make OPENBLAS_USE_THREAD=0' if OpenBLAS had trouble linking libpthread.so, and with 'make OPENBLAS_TARGET_ARCH=NEHALEM' if there were errors building SandyBridge support. Both these options can also be used simultaneously. ***
+make[1]: *** [scratch/openblas-85636ff1a015d04d3a8f960bc644b85ee5157135/build-compiled] Error 1
+make: *** [julia-deps] Error 2
+```
