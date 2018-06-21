@@ -32,6 +32,7 @@ Hello World
 ```
 Notice the return statement starts with a `:` and is wrapped with parenthesis?
 In julia, `:` is quote symbol, referred to as "the colon operator".
+The colon operator constructs an expression, which, if evaluated, will produce results.
 To make an analogy with English language, when we want to use the word itself, rather than the meaning of the word, we usually wrap the word in quotes.
 Example: "Cat" spells C-A-T.
 
@@ -44,7 +45,7 @@ macro helloWorld()
   end
 end
 ```
-This will produce the same result as above example.
+This will produce the same result as `:()`.
 
 If you want to replace a string with variable, use `$` for string interpolation:
 
@@ -59,23 +60,82 @@ julia> @hello("America!")
 Hello America!
 ```
 
-Lastly, let's construct a more complicated macro:
+Lastly, let's take a look at a real macro definition, the first macro mentioned in the article, `@time`.
 ```
-macro dotimes(n, body)
+macro time(ex)
     quote
-        for i = 1:$(esc(n))
-            $(esc(body))
-        end
+        local stats = gc_num()
+        local elapsedtime = time_ns()
+        local val = $(esc(ex))
+        elapsedtime = time_ns() - elapsedtime
+        local diff = GC_Diff(gc_num(), stats)
+        time_print(elapsedtime, diff.allocd, diff.total_time,
+                   gc_alloc_count(diff))
+        println()
+        val
     end
 end
 ```
+The syntax is straight forward.
+But notice there is a new expression: $(esc(ex)).
+This makes sure the code you pass in, "escape" the current context, meaning it is not evaluated immediately in the macro definition context, and is only evaluated at calling context.
+When to use $(esc())?
+When you
+
+
+
+At the end of each line in the expansion, it shows which source file the macro is in and on which line.
+The local variables are assigned a number in the name to make sure it does not accidentally collide with the expression that you are passing in.
+In `@time` macro, it first takes the memory allocation status, then the begining time.
+Then evaluates 2^30, and
+
+#### When should you write a macro rather than function?
+
 
 
 ## Code generation
+You don't need to use macro to do metaprogramming.
+Since julia is homoiconic, which means the language itself is represented in its data structure.
+This feature allows us to manipulate source code before it is compiled.
+An important macro for metaprogramming is `@eval`.
+`@eval` allow you to evaluate and expression.
+In that expression, you can splice in some value that are outside of the epxression, in this case, we are splicing in the symbols.
+The good things is that no matter how many functions you have, the complexity is the same.
+
+Let's try to solve the problem mentioned in the begining - writing a function that can generate code for different data types. Say I want to write a function that tells me what data type is the argument, Float64, String, or Int64.
+I need to define three functions, each with a different argument type, but have the same function name and prints out the result.
+Rather than copy and pasting the same code and only change the argument type, we can use Julia to generate the functions:
+```
+julia> for datatype in [:Float64, :String, :Int64]
+          @eval function $(Symbol(string("which_datatype")))(data::$datatype)
+            println(data, " is a ", $(string(datatype)))
+          end
+       end
+julia> which_datatype(64.33)
+64.33 is a Float64
+
+help?> which_datatype
+search:
+
+  No documentation found.
+
+  which_datatype is a Function.
+
+  # 3 methods for generic function "which_datatype":
+  which_datatype(data::Int64) in Main at REPL[14]:3
+  which_datatype(data::String) in Main at REPL[14]:3
+  which_datatype(data::Float64) in Main at REPL[14]:3
+```
+To search for a function, just type `?` in julia REPL and it will change to help mode `help?>`.
+The search result shows that we have defined three methods with the name `which_datatype`, each with a different datatype.
+
+It is a very simple form of metaprogramming, but it shows the infinite possibilities.
+Next time when you need to write boiler plate functions, don't copy and paste, use metaprogramming!
 
 
 
-Let's try to solve the above mentioned task - writing a function that can generate code for different data types. Julia is the language used in this example.
+
+
 
 
 
@@ -157,3 +217,81 @@ julia> op = :+
 julia> eval(op)
 + (generic function with 1 method)
 ```
+
+
+## confusion about Julia macro.
+I am trying to understand how does the $(esc(ex)) work in macro definitions.
+I read the following source to learn about this matter.
+[Source1](https://en.wikibooks.org/wiki/Introducing_Julia/Metaprogramming),
+[Source2](https://docs.julialang.org/en/v0.6.1/manual/metaprogramming/).
+
+My understanding is that in order to keep macro hygien, we need to use `esc` to keep global space variables seperate from local variables.
+For example, we have an n defined in Main, and argument of Macro, and locally defined inside macro.
+```
+macro esc_example(n, a)
+  quote
+      n = 3
+      println(n, " I am n in the macro local space.")
+      println($n, " I am dollar n from Main.")
+      println($(esc(n)), " I am escape n in macro argument.")
+      println()
+
+      println(a, " I am a in the macro argument.")
+      println($a, " I am dollar a in the macro argument.")
+      println($(esc(a)), " I am escape a in Main.")
+  end
+end
+```
+
+In this example, n should refer to the locally defined n, $n should be the string interpolation of n, which is bassically, replace n with it's value. Lastly the $(esc(ex)) should refer to the variable in Main.
+
+Here is what I got from macroexpand():
+```
+macroexpand(:(@esc_example(n,n)))
+quote  # REPL[15], line 3:
+    #8#n = 3 # REPL[15], line 4:
+    (Main.println)(#8#n, " I am n in the macro local space.") # REPL[15], line 5:
+    (Main.println)(#8#n, " I am dollar n from Main.") # REPL[15], line 6:
+    (Main.println)(n, " I am escape n in macro argument.") # REPL[15], line 7:
+    (Main.println)() # REPL[15], line 9:
+    #9#a = 4 # REPL[15], line 10:
+    (Main.println)(#9#a, " I am a in the macro argument.") # REPL[15], line 11:
+    (Main.println)(#8#n, " I am dollar a in the macro argument.") # REPL[15], line 12:
+    (Main.println)(n, " I am escape a in Main.")
+end
+```
+I am trying to distingish the use of n, $n, and $(esc(n)). 
+Clearly, n refers to the local n, which name was transformed to #8#n.
+$n should be the string intepolation of n, which was 3 in local space, or 1 in Main space. But instead, REPL thinks it is the local n.
+Third, using escape leaves n just before the evaluation.
+So, $(esc(ex)) refer to a global variable.
+For example:
+
+julia> n = 1
+1
+
+macro esc_example(n, a)
+    quote
+        n = 3
+        println(n, " I am n in the macro local space.")
+        println($n, " I am dollar n from Main.")
+        println($(esc(n)), " I am escape n in macro argument.")
+        println()
+
+        a = 4
+        println(a, " I am a in the macro argument.")
+        println($a, " I am dollar a in the macro argument.")
+        println($(esc(a)), " I am escape a in Main.")
+    end
+end
+
+julia> @esc_example(n,a)
+3 I am n in the macro local space.
+3 I am n dollar sign n.
+1 I am n in Main.
+
+1 I am a in the macro argument.
+1 I am dollar a in the macro argument.
+1 I am escape a in Main.
+
+n in Main space is 1, in macro is 3, I am also passing in an integer just to compare.
