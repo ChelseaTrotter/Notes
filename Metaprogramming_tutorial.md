@@ -1,7 +1,10 @@
-### Metaprogramming:
+# Metaprogramming in Julia:
 
-Programming is a very creative task, but there are also some of tedious tasks in programming. Sometimes, you need a function that can operate on different data types. You end up with a bunch of functions that looks almost identical, but with different data types. Wouldn't it be nice if the program can generate the code for these repetitive code? The answer is metaprogramming. And Julia, influenced by Lisp, has a strong metaprogramming orientation. So in this tutorial, I will use Julia to demonstrate metaprogramming. You are welcome to try the demo code in Julia.
+Programming is a very creative task, but there are also some of tedious tasks in programming. Sometimes, you need a function that can operate on different data types. You end up with a bunch of functions that looks almost identical, but with different data types. Wouldn't it be nice if the program can generate the code for these repetitive code? If you need to write soemthing twice, think twice. The answer is metaprogramming.
 
+Julia, influenced by Lisp, has a strong metaprogramming orientation. So in this tutorial, I will use Julia to demonstrate metaprogramming. You are welcome to try the demo code in Julia.
+
+## Macro
 For many people, the most familiar form of metaprogramming, is using macro.
 You might be already using macro in Julia. For exmaple, `@time` is a macro that measures the running time and memory allocations of a function.
 
@@ -134,42 +137,11 @@ To search for a function, just type `?` in julia REPL and it will change to help
 The search result shows that we have defined three methods with the name `which_datatype`, each with a different datatype.
 
 It is a very simple form of metaprogramming, but it shows the infinite possibilities.
-Next time when you need to write boiler plate functions, don't copy and paste, use metaprogramming!
+Next time when you need to write boiler plate functions, don't copy and paste, use metaprogramming.
+Because sometimes, lazy is a virtual. :)
 
 If you would like to explore further on metaprogramming in Julia.
 Here are some good resources:
 Julia's official Metaprogramming documentation: [here](https://docs.julialang.org/en/v0.6.1/manual/metaprogramming/)
-Intruducing Julia Metaprogramming: [here](https://en.wikibooks.org/wiki/Introducing_Julia/Metaprogramming)
+Intruducing Julia Metaprogramming: [here](https://en.wikibooks.org/wiki/Introducing_Julia/Metaprogramming)  
 To learn more about `@eval` notation: [here](https://docs.julialang.org/en/stable/manual/metaprogramming/#Metaprogramming-1).
-
-
-
-
-
-
-
-Examples:
-Usage:
-Important syntax/symbols/functions and their meaning and usage:
-1. quote or :
-2. eval() and @eval
-3. dump
-4. $
-5. macro , macroexpand()
-6. fieldnames()
-7. esc()
-Important characteristics of Julia metaprogramming:
-           1. hygienic macros.
-
-
-
-Sometimes, Lazy is a virtual. It drives human to invent, and to be more efficient.
-
-If you need to write something twice, think twice.
-
-
-
-Metaprogramming is one way to take programming one step further to be more lazy :)
-
-
-If we are already programming to automate tasks, why not take a step furthur to

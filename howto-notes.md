@@ -10,6 +10,7 @@ I wanted to be able to edit files on a remote server using the editor on my loca
 5. Both FUSE for OS X and SSFHS were now installed.
 6. Next, I needed to create a new folder on my laptop which would serve as the mount point. Let’s call that folder `~/mountpoint`.
 7. I used this command `sudo sshfs -o allow_other,defer_permissions,IdentityFile=~/.ssh/id_rsa $username@xxx.xxx.xxx.xxx:/ ~/mountpoint` because I have ssh key to the remote server. If you don't have ssh key, then just use this command: `sudo sshfs -o allow_other,defer_permissions $username@xxx.xxx.xxx.xxx:/ ~/mountpoint`
+sshfs xhu@cuda-linux:/home/xhu/ ~/Documents/mountpoint/linux/
 8. To unmount, do this `sudo umount ~/mountpoint`
 9. To permanantly mount at this location, do this `sudo vim /etc/fstab`, and then scroll to the bottom of the file and add the following entry: `$username@xxx.xxx.xxx.xxx:/ ~/mountpoint`. **WARNING**: This is a potential security risk, because if your local machine is compromised it allows a direct route to your `mountpoint`. Therefore it is not recommended to setup permanent mounts on production servers.
 10. Save the changes to `/etc/fstab` and reboot if necessary.
@@ -25,3 +26,8 @@ abort: error: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed (_ssl.c
 I just followed the instruction(go to [this page](https://mercurial-scm.org/wiki/SecureConnections)) and found the solution on [this page](https://www.mercurial-scm.org/wiki/CACertificates). Basically put the following line to `~/.hgrc` fixed the problem (create ~/.hgrc file if it does not already exist).
 `[web]
 cacerts = /etc/ssl/certs/ca-certificates.crt`
+
+
+### How to find out running process on GPU and then kill it. 
+`$nvidia-smi` will show you a list of processes pid. 
+`$sudo kill -9 <pid>`
